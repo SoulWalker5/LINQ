@@ -15,18 +15,17 @@ namespace Lesson3_5
 
 
 
-            var usersname12 = users.Where(u => u.LastName.ToCharArray().Length + u.FirstName.ToCharArray().Length >= 12);//1)
+            var usersname12 = users.Where(u => u.LastName.Length + u.FirstName.Length >= 12);//1)
 
             var usersname12linq = from u in users
-                                  where u.LastName.ToCharArray().Length + u.FirstName.ToCharArray().Length >= 12//1) LINQ
+                                  where u.LastName.Length + u.FirstName.Length >= 12//1) LINQ
                                   select u;
 
             var cheek12 = usersname12.SequenceEqual(usersname12linq); //Cheek for 1)
 
 
 
-            var usersTransactions = users.Where(u => (u.Transactions?.Any()).GetValueOrDefault()).
-                SelectMany(u => u.Transactions).ToList();//2)
+            var usersTransactions = users.SelectMany(u => u.Transactions).ToList();//2)
 
             var usersTransactionslinq = from u in users
                                         from x in u.Transactions
@@ -106,8 +105,8 @@ namespace Lesson3_5
             var bankPremTrans = bankPremUsers.SelectMany(u => u.Transactions).ToList();//6)
 
             var usersPremiumlinq = from u in users
-                                    where u.Type == UserType.Premium
-                                    select u;
+                                   where u.Type == UserType.Premium
+                                   select u;
             var bankUserPremlinq = from u in usersPremiumlinq
                                    select u.Bank.Id;
             var bankUsermax = bankUserPremlinq.Max();
