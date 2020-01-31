@@ -35,18 +35,19 @@ namespace Lesson3_5
 
 
 
-            var maxTrans = users.Max(u => u.Bank.Transactions.Count);
-            var mostTransInBank = users.Where(u => u.Bank.Transactions.Count == maxTrans);
+            var maxTrans = banks.Max(u => u.Transactions.Count);
+            var bankWith = users.Where(u => u.Bank.Transactions.Count == maxTrans).Select(y => y.Bank.Id).FirstOrDefault();
+            var mostTransInBank = users.Where(u => u.Bank.Transactions.Count == maxTrans && u.Bank.Id == bankWith)/*.Select(y => y.Bank.Id).FirstOrDefault()*/;
             var adminInMostTransBank = mostTransInBank.Where(u => u.Type == UserType.Admin); //4)
             //or
-            var adminInMostTransBankEquals = users.Where(u => u.Bank.Transactions.Count == maxTrans && u.Type == UserType.Admin);
+            //var adminInMostTransBankEquals = users.Where(u => u.Bank.Transactions.Count == maxTrans && u.Type == UserType.Admin);
 
             var mostTransInBanklinq = from b in users
-                                      where b.Bank.Transactions.Count == users.Max(u => u.Bank.Transactions.Count)
+                                      where b.Bank.Transactions.Count == banks.Max(u => u.Transactions.Count)
                                       select b;
 
             var adminInMostTransBanklinq = from u in mostTransInBanklinq
-                                           where u.Type == UserType.Admin
+                                           where u.Type == UserType.Admin && u.Bank.Id == bankWith
                                            select u;//4) LINQ
 
             var cheekMostBankTrans = adminInMostTransBank.SequenceEqual(adminInMostTransBanklinq);//Cheek for 4)
@@ -100,22 +101,30 @@ namespace Lesson3_5
 
 
             var usersPremium = users.Where(u => u.Type == UserType.Premium);
-            var bankUserPrem = usersPremium.Max(u => u.Bank.Id);
-            var bankPremUsers = users.Where(u => u.Bank.Id == bankUserPrem);
-            var bankPremTrans = bankPremUsers.SelectMany(u => u.Transactions).ToList();//6)
+            var bankGrouping = usersPremium.GroupBy(b => b.Bank.Transactions.Count);
+            var bankMostAsig = bankGrouping.OrderByDescending(y => y.Key).Select(u => u.Key).First();
+            var transPrem = banks.Where(u => u.Transactions.Count == bankMostAsig).First();//6)
+            var bankPremTrans = transPrem.Transactions.Select(y => y);
+
 
             var usersPremiumlinq = from u in users
                                    where u.Type == UserType.Premium
                                    select u;
-            var bankUserPremlinq = from u in usersPremiumlinq
-                                   select u.Bank.Id;
-            var bankUsermax = bankUserPremlinq.Max();
-            var bankPremTranslinq = from u in users
-                                    where u.Bank.Id == bankUsermax
-                                    from t in u.Transactions
+            var userdescending = from b in usersPremium
+                     group b by b.Bank.Transactions.Count;
+            var userdescendingfirst = from b in userdescending
+                        orderby b.Key descending
+                        select b.First().Bank.Transactions.Count;
+            var bankMostAsiglinqFirst = userdescendingfirst.First();
+
+            var transPremlinq = from b in banks
+                                where b.Transactions.Count == bankMostAsiglinqFirst
+                                select b;
+            var transPremFirstlinq = transPremlinq.First();
+            var bankPremTranslinq = from t in transPremFirstlinq.Transactions
                                     select t;
 
-            var cheekprem = bankPremTranslinq.SequenceEqual(bankPremTrans);
+            var cheekforPrem = bankPremTrans.SequenceEqual(bankPremTranslinq);
 
             //+1) Сделать выборку всех Пользователей, имя + фамилия которых длиннее чем 12 символов.
 
